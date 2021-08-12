@@ -1,0 +1,854 @@
+define("pages/audition_tpl.html.js",[],function(){
+return'<div id="js_music_dialog">\n    <div class="weui-mask"></div>\n    <div class="weui-dialog">\n        <div class="weui-dialog__bd"><#=msg#></div>\n        <div class="weui-dialog__ft">\n            <a href="javascript:void(0);" class="weui-dialog__btn weui-dialog__btn_primary js_submit">我知道了</a>\n        </div>\n    </div>\n</div>';
+});define("pages/player_tips.js",["biz_common/tmpl.js","pages/audition_tpl.html.js","biz_common/dom/event.js"],function(t){
+"use strict";
+function i(t){
+this.parent=document.body,this.opt=t||{},this.init();
+}
+var n=t("biz_common/tmpl.js"),e=t("pages/audition_tpl.html.js"),o=t("biz_common/dom/event.js");
+return i.prototype.init=function(){
+var t=document.createElement("div");
+t.innerHTML=n.tmpl(e,this.opt,!1),this.parent.appendChild(t),this.dom=document.getElementById("js_music_dialog");
+var i=this;
+o.on(i.dom.getElementsByClassName("js_submit")[0],"click",function(){
+i.parent.removeChild(t),"function"==typeof i.opt.onClick&&i.opt.onClick();
+});
+},i;
+});define("biz_common/utils/emoji_panel_data.js",[],function(){
+"use strict";
+return[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,"17_1",18,19,20,21,22,23,25,26,27,28,29,30,31,32,33,34,36,37,38,39,40,41,42,44,45,46,47,48,49,50,51,52,54,300,301,302,303,304,305,306,307,204,205,202,206,212,211,313,314,315,316,317,318,319,320,321,322,323,330,329,328,327,326,325,65,66,67,78,79,80,81,82,83,84,85,89,309,310,56,57,60,68,63,64,55,70,74,75,76,311,77,209,324,215,62,308,92,93,94,95];
+});define("pages/video_communicate_adaptor.js",["pages/player_tips.js"],function(t){
+"use strict";
+function e(){
+window.addEventListener("message",i,!1),p();
+}
+function i(t){
+var e;
+if(t.origin?e=t.origin:t.originalEvent&&(e=t.originalEvent.origin),/^http(s)?\:\/\/mp\.weixin\.qq\.com$/.test(e)&&t.source){
+var i=t.data;
+if(i&&i.type){
+if(!/^mpvideo_/.test(i.type))return;
+var o=i.type.replace(/^mpvideo_/,"");
+/^broadcast_/.test(o)?u.postMessageEvt.broadcast({
+data:i.data,
+type:o
+}):u.postMessageEvt[o]&&u.postMessageEvt[o](i.data);
+}
+}
+}
+function o(t){
+var e=t.type.replace(/^broadcast_/,""),i=d();
+if(i.length>0)for(var o=0,a=i.length;a>o;o++){
+var r=i[o];
+n({
+win:r.contentWindow,
+type:e,
+data:t.data
+});
+}
+n({
+win:window,
+type:e,
+data:t.data
+});
+}
+function n(t){
+var e=t.type;
+/^mpvideo_/.test(e)||(e="mpvideo_"+e);
+var i={
+data:t.data,
+type:e
+};
+t.win.postMessage(i,document.location.protocol+"//mp.weixin.qq.com");
+}
+function a(){
+var t=arguments.length<=0||void 0===arguments[0]?{}:arguments[0];
+t.msg&&new f({
+msg:t.msg
+});
+}
+function r(t){
+for(var e=d({
+vid:t.vid
+}),i=0,o=e.length;o>i;i++){
+var a=e[i];
+a.style.display="";
+var r=a.parentNode,s=r.querySelectorAll('.js_img_loading[data-vid="'+t.vid+'"]');
+if(s&&s.length>0)for(var i=0,o=s.length;o>i;i++)r.removeChild(s[i]);
+n({
+type:"afterRemoveLoading",
+win:a.contentWindow
+});
+}
+}
+function d(t){
+t=t||{};
+for(var e=document.getElementsByTagName("iframe"),i=[],o=0,n=e.length;n>o;o++){
+var a=e[o],r=a.getAttribute("src");
+if(window.__second_open__&&(r=a.getAttribute("data-realsrc")),r&&-1!=r.indexOf("/mp/videoplayer")){
+if("undefined"!=typeof t.vid){
+var d=r.match(/[\?&]vid\=([^&]*)/);
+if(!d||!d[1]||d[1]!=t.vid)continue;
+}
+i.push(a);
+}
+}
+return i;
+}
+function s(t){
+if(t.height){
+var e=d({
+vid:t.vid
+});
+if(0!=e.length){
+var i=e[0],o=i.offsetHeight+1*t.height;
+i.setAttribute("height",o),i.setAttribute("data-additionalheight",t.height),i.style.setProperty&&i.style.setProperty("height",o+"px","important");
+}
+}
+}
+function v(t){
+u.videoInfo[t.vid]||(u.videoInfo[t.vid]={}),u.videoInfo[t.vid].ori_status=t.ori_status,
+u.videoInfo[t.vid].hit_bizuin=t.hit_bizuin,u.videoInfo[t.vid].hit_vid=t.hit_vid;
+}
+function p(){
+"function"==typeof window.__getVideoWh&&window.addEventListener("resize",function(){
+for(var t=d(),e=0,i=t.length;i>e;e++){
+var o=t[e];
+setTimeout(function(t){
+return function(){
+var e=window.__getVideoWh(t),i=e.w,o=e.h,n=1*t.getAttribute("data-additionalheight");
+n&&(o+=n),t.setAttribute("width",i),t.setAttribute("height",o),t.style.setProperty&&(t.style.setProperty("width",i+"px","important"),
+t.style.setProperty("height",o+"px","important"));
+};
+}(o),50);
+}
+},!1);
+}
+function g(){
+return u.videoInfo;
+}
+var f=t("pages/player_tips.js"),u={
+videoInfo:{},
+postMessageEvt:{
+broadcast:o,
+removeVideoLoading:r,
+addVideoIframeHeight:s,
+videoInited:v,
+showTips:a
+}
+};
+return e(),{
+getVideoInfo:g
+};
+});define("appmsg/without_iframe/video_communicate_adaptor.js",["pages/player_tips.js","appmsg/without_iframe/iframe_communicate.js"],function(t){
+"use strict";
+function e(t){
+t=t||{};
+for(var e=document.getElementsByClassName("video_iframe"),i=[],o=0,r=e.length;r>o;o++){
+var n=e[o],a=n.getAttribute("vid");
+("undefined"==typeof t.vid||a===t.vid)&&i.push(n);
+}
+return i;
+}
+function i(t){
+for(var i=e({
+vid:t.vid
+}),o=0,r=i.length;r>o;o++){
+var n=i[o];
+n.style.display="";
+var a=n.parentNode,d=a.querySelectorAll('.js_img_loading[data-vid="'+t.vid+'"]');
+if(d&&d.length>0)for(var s=0,v=d.length;v>s;s++)a.removeChild(d[s]);
+u.triggerListener({
+type:"afterRemoveLoading",
+vid:t.vid
+});
+}
+}
+function o(t){
+if(t.height){
+var i=e({
+vid:t.vid
+});
+if(0!==i.length){
+var o=i[0],r=o.offsetHeight+1*t.height;
+o.setAttribute("height",r),o.setAttribute("data-additionalheight",t.height),o.style.setProperty&&o.style.setProperty("height",r+"px","important");
+}
+}
+}
+function r(t){
+h.videoInfo[t.vid]||(h.videoInfo[t.vid]={}),h.videoInfo[t.vid].ori_status=t.ori_status,
+h.videoInfo[t.vid].hit_bizuin=t.hit_bizuin,h.videoInfo[t.vid].hit_vid=t.hit_vid;
+}
+function n(){
+return h.videoInfo;
+}
+function a(t){
+var e=t.type.replace(/^broadcast_/,"");
+u.triggerListener({
+type:e,
+data:t.data
+});
+}
+function d(){
+var t=arguments.length<=0||void 0===arguments[0]?{}:arguments[0];
+t.msg&&new f({
+msg:t.msg
+});
+}
+function s(t){
+var e=void 0;
+if(t.origin?e=t.origin:t.originalEvent&&(e=t.originalEvent.origin),/^http(s)?\:\/\/mp\.weixin\.qq\.com$/.test(e)&&t.source){
+var i=t.data;
+if(i&&i.type){
+if(!/^mpvideo_/.test(i.type))return;
+var o=i.type.replace(/^mpvideo_/,"");
+/^broadcast_/.test(o)?p.broadcast({
+data:i.data,
+type:o
+}):p[o]&&p[o](i.data);
+}
+}
+}
+function v(){
+"function"==typeof window.__getVideoWh&&window.addEventListener("resize",function(){
+for(var t=e(),i=0,o=t.length;o>i;i++){
+var r=t[i];
+setTimeout(function(t){
+return function(){
+var e=window.__getVideoWh(t),i=e.w,o=e.h,r=1*t.getAttribute("data-additionalheight");
+r&&(o+=r),t.setAttribute("width",i),t.setAttribute("height",o),t.style.setProperty&&(t.style.setProperty("width",i+"px","important"),
+t.style.setProperty("height",o+"px","important"));
+};
+}(r),0);
+}
+},!1);
+}
+function g(){
+window.addEventListener("message",s,!1),v();
+}
+var f=t("pages/player_tips.js"),u=t("appmsg/without_iframe/iframe_communicate.js"),h={
+videoInfo:{},
+videoCbs:{}
+},p={
+broadcast:a,
+removeVideoLoading:i,
+addVideoIframeHeight:o,
+videoInited:r,
+showTips:d
+};
+return g(),{
+getVideoInfo:n
+};
+});define("appmsg/like_profile_tpl.html.js",[],function(){
+return'<!-- 关注 -->\n<!-- 显示：去掉wx_follow_hide，并获取function_mod_inner的高度，赋值给function_mod即可-->\n<div class="wx_follow_context wx_follow_hide" id="js_like_profile_bar">\n    <div class="function_mod js_function_mod">\n        <div class="function_mod_inner js_function_mod_inner">\n        <div class="function_hd">关注以获取最新消息</div>\n        <div class="function_bd">\n            <div class="wx_follow_media weui-flex">\n            <div class="wx_follow_hd">\n                <img class="wx_follow_avatar" src="{roundHeadImg}" alt="<#=nickname#>">\n\n            </div>\n            <div class="wx_follow_bd weui-flex__item">\n                <div class="wx_follow_nickname">{nickname}</div>\n                <div class="wx_follow_tips">\n                    {if orignalNum}\n                    <span class="wx_follow_tips_meta">{orignalNum}篇原创内容</span>\n                    {/if}\n                    {if friendSubscribeCount}\n                    <span class="wx_follow_tips_meta">{friendSubscribeCount}位朋友关注</span>\n                    {/if}\n                </div>\n            </div>\n            <div class="wx_follow_ft">\n                <button class="weui-btn weui-btn_primary weui-btn_xmini" type="button" id="js_focus">关注</button>\n                <button class="weui-btn weui-btn_primary weui-btn_xmini weui-btn_disabled" type="button" id="js_already_focus" style="display: none;">已关注</button>\n            </div>\n            </div>\n        </div>\n        </div>\n    </div>\n</div>\n';
+});define("biz_common/template-2.0.1-cmd.js",[],function(){
+"use strict";
+var e=function(n,t){
+return e["object"==typeof t?"render":"compile"].apply(e,arguments);
+};
+return window.template=e,function(e,n){
+e.version="2.0.1",e.openTag="<#",e.closeTag="#>",e.isEscape=!0,e.isCompress=!1,e.parser=null,
+e.render=function(e,n){
+var t=r(e);
+return void 0===t?o({
+id:e,
+name:"Render Error",
+message:"No Template"
+}):t(n);
+},e.compile=function(n,r){
+function a(t){
+try{
+return new l(t)+"";
+}catch(i){
+return u?(i.id=n||r,i.name="Render Error",i.source=r,o(i)):e.compile(n,r,!0)(t);
+}
+}
+var c=arguments,u=c[2],s="anonymous";
+"string"!=typeof r&&(u=c[1],r=c[0],n=s);
+try{
+var l=i(r,u);
+}catch(p){
+return p.id=n||r,p.name="Syntax Error",o(p);
+}
+return a.prototype=l.prototype,a.toString=function(){
+return l.toString();
+},n!==s&&(t[n]=a),a;
+},e.helper=function(n,t){
+e.prototype[n]=t;
+},e.onerror=function(e){
+var t="[template]:\n"+e.id+"\n\n[name]:\n"+e.name;
+e.message&&(t+="\n\n[message]:\n"+e.message),e.line&&(t+="\n\n[line]:\n"+e.line,
+t+="\n\n[source]:\n"+e.source.split(/\n/)[e.line-1].replace(/^[\s\t]+/,"")),e.temp&&(t+="\n\n[temp]:\n"+e.temp),
+n.console&&console.error(t);
+};
+var t={},r=function(r){
+var o=t[r];
+if(void 0===o&&"document"in n){
+var i=document.getElementById(r);
+if(i){
+var a=i.value||i.innerHTML;
+return e.compile(r,a.replace(/^\s*|\s*$/g,""));
+}
+}else if(t.hasOwnProperty(r))return o;
+},o=function(n){
+function t(){
+return t+"";
+}
+return e.onerror(n),t.toString=function(){
+return"{Template Error}";
+},t;
+},i=function(){
+e.prototype={
+$render:e.render,
+$escape:function(e){
+return"string"==typeof e?e.replace(/&(?![\w#]+;)|[<>"']/g,function(e){
+return{
+"<":"&#60;",
+">":"&#62;",
+'"':"&#34;",
+"'":"&#39;",
+"&":"&#38;"
+}[e];
+}):e;
+},
+$string:function(e){
+return"string"==typeof e||"number"==typeof e?e:"function"==typeof e?e():"";
+}
+};
+var n=Array.prototype.forEach||function(e,n){
+for(var t=this.length>>>0,r=0;t>r;r++)r in this&&e.call(n,this[r],r,this);
+},t=function(e,t){
+n.call(e,t);
+},r="break,case,catch,continue,debugger,default,delete,do,else,false,finally,for,function,if,in,instanceof,new,null,return,switch,this,throw,true,try,typeof,var,void,while,with,abstract,boolean,byte,char,class,const,double,enum,export,extends,final,float,goto,implements,import,int,interface,long,native,package,private,protected,public,short,static,super,synchronized,throws,transient,volatile,arguments,let,yield,undefined",o=/\/\*(?:.|\n)*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|'[^']*'|"[^"]*"|[\s\t\n]*\.[\s\t\n]*[$\w\.]+/g,i=/[^\w$]+/g,a=new RegExp(["\\b"+r.replace(/,/g,"\\b|\\b")+"\\b"].join("|"),"g"),c=/\b\d[^,]*/g,u=/^,+|,+$/g,s=function(e){
+return e=e.replace(o,"").replace(i,",").replace(a,"").replace(c,"").replace(u,""),
+e=e?e.split(/,+/):[];
+};
+return function(n,r){
+function o(n){
+return g+=n.split(/\n/).length-1,e.isCompress&&(n=n.replace(/[\n\r\t\s]+/g," ")),
+n=n.replace(/('|\\)/g,"\\$1").replace(/\r/g,"\\r").replace(/\n/g,"\\n"),n=w[1]+"'"+n+"'"+w[2],
+n+"\n";
+}
+function i(n){
+var t=g;
+if(p?n=p(n):r&&(n=n.replace(/\n/g,function(){
+return g++,"$line="+g+";";
+})),0===n.indexOf("=")){
+var o=0!==n.indexOf("==");
+if(n=n.replace(/^=*|[\s;]*$/g,""),o&&e.isEscape){
+var i=n.replace(/\s*\([^\)]+\)/,"");
+$.hasOwnProperty(i)||/^(include|print)$/.test(i)||(n="$escape($string("+n+"))");
+}else n="$string("+n+")";
+n=w[1]+n+w[2];
+}
+return r&&(n="$line="+t+";"+n),a(n),n+"\n";
+}
+function a(e){
+e=s(e),t(e,function(e){
+h.hasOwnProperty(e)||(c(e),h[e]=!0);
+});
+}
+function c(e){
+var n;
+"print"===e?n=O:"include"===e?(y.$render=$.$render,n=j):(n="$data."+e,$.hasOwnProperty(e)&&(y[e]=$[e],
+n=0===e.indexOf("$")?"$helpers."+e:n+"===undefined?$helpers."+e+":"+n)),m+=e+"="+n+",";
+}
+var u=e.openTag,l=e.closeTag,p=e.parser,f=n,d="",g=1,h={
+$data:!0,
+$helpers:!0,
+$out:!0,
+$line:!0
+},$=e.prototype,y={},m="var $helpers=this,"+(r?"$line=0,":""),v="".trim,w=v?["$out='';","$out+=",";","$out"]:["$out=[];","$out.push(",");","$out.join('')"],b=v?"if(content!==undefined){$out+=content;return content}":"$out.push(content);",O="function(content){"+b+"}",j="function(id,data){if(data===undefined){data=$data}var content=$helpers.$render(id,data);"+b+"}";
+t(f.split(u),function(e){
+e=e.split(l);
+var n=e[0],t=e[1];
+1===e.length?d+=o(n):(d+=i(n),t&&(d+=o(t)));
+}),f=d,r&&(f="try{"+f+"}catch(e){e.line=$line;throw e}"),f="'use strict';"+m+w[0]+f+"return new String("+w[3]+")";
+try{
+var E=new Function("$data",f);
+return E.prototype=y,E;
+}catch(T){
+throw T.temp="function anonymous($data) {"+f+"}",T;
+}
+};
+}();
+e.openTag="{",e.closeTag="}",e.parser=function(n){
+n=n.replace(/^\s/,"");
+var t=n.split(" "),r=t.shift(),o=e.keywords,i=o[r];
+return i&&o.hasOwnProperty(r)?(t=t.join(" "),n=i.call(n,t)):e.prototype.hasOwnProperty(r)?(t=t.join(","),
+n="=="+r+"("+t+");"):(n=n.replace(/[\s;]*$/,""),n="="+n),n;
+},e.keywords={
+"if":function(e){
+return"if("+e+"){";
+},
+"else":function(e){
+return e=e.split(" "),e="if"===e.shift()?" if("+e.join(" ")+")":"","}else"+e+"{";
+},
+"/if":function(){
+return"}";
+},
+each:function(e){
+e=e.split(" ");
+var n=e[0]||"$data",t=e[1]||"as",r=e[2]||"$value",o=e[3]||"$index",i=r+","+o;
+return"as"!==t&&(n="[]"),"$each("+n+",function("+i+"){";
+},
+"/each":function(){
+return"});";
+},
+echo:function(e){
+return"print("+e+");";
+},
+include:function(e){
+e=e.split(" ");
+var n=e[0],t=e[1],r=n+(t?","+t:"");
+return"include("+r+");";
+}
+},e.helper("$each",function(e,n){
+var t=Array.isArray||function(e){
+return"[object Array]"===Object.prototype.toString.call(e);
+};
+if(t(e))for(var r=0,o=e.length;o>r;r++)n.call(e,e[r],r,e);else for(r in e)n.call(e,e[r],r);
+});
+}(e,window),e;
+});define("pages/scrollY.js",["pages/utils.js"],function(e){
+"use strict";
+var n=e("pages/utils.js"),t=window.requestAnimationFrame,o=0;
+["webkit","moz","ms","o"].some(function(e){
+return t?!0:(t=t||window[e+"RequestAnimationFrame"],!1);
+}),t||(t=function(e){
+var n=(new Date).getTime(),t=Math.max(0,16-(n-o));
+return o=n+t,window.setTimeout(function(){
+return e(n+t);
+},t);
+});
+var r={
+easeOutSine:function(e){
+return Math.sin(e*(Math.PI/2));
+},
+easeInOutSine:function(e){
+return-.5*(Math.cos(Math.PI*e)-1);
+},
+easeInOutQuint:function(e){
+return e/=.5,1>e?.5*Math.pow(e,5):.5*(Math.pow(e-2,5)+2);
+},
+easeInOutCubic:function(e){
+return.5>e?4*e*e*e:(e-1)*(2*e-2)*(2*e-2)+1;
+}
+},i=function(e,n){
+var t=arguments.length<=2||void 0===arguments[2]?document.body:arguments[2];
+"function"==typeof e&&e(),t===document.body?(document.documentElement.scrollTop=n,
+document.body.scrollTop=n):t.scrollTop=n;
+},u=function(){
+var e=arguments.length<=0||void 0===arguments[0]?document.body:arguments[0];
+return e===document.body?n.getScrollTop():e.scrollTop;
+},a={},s=function m(){
+var e=1*new Date+"_"+1e4*Math.random().toFixed(4);
+return a[e]?m():e;
+},c=function(e){
+delete a[e];
+},d=function(e){
+var n=e.el,o=void 0===n?document.body:n,d=e.y,m=e.distance,f=e.speed,l=e.duration,v=e.easing,p=void 0===v?"easeOutSine":v,g=e.begin,h=e.end,b=e.beforeScroll;
+"function"==typeof g&&g(),Object.keys(a).forEach(function(e){
+a[e].el===o&&c(e);
+});
+var y=u(o),w=0;
+if(void 0!==d)m=d-y;else{
+if(void 0===m)return void console.error("need param `y` or `distance`.");
+d=m+y;
+}
+if(0!==m){
+void 0===f&&(f=void 0!==l?m/l:2e3);
+var M=l||Math.max(.1,Math.min(Math.abs((y-d)/f),.8)),T=s();
+a[T]={
+el:o
+};
+var O=function I(){
+if(a[T]){
+w+=1/60;
+var e=w/M,n=r[p](e);
+1>e?(t(I),i(b,y+(d-y)*n,o)):(c(T),i(b,d,o),"function"==typeof h&&h());
+}
+};
+O();
+}
+};
+return{
+start:d,
+stop:c
+};
+});define("appmsg/related_article_feedback.js",["biz_wap/utils/ajax.js","biz_common/dom/class.js","biz_common/dom/event.js","biz_common/utils/url/parse.js","common/utils.js"],function(e){
+"use strict";
+function t(e,t){
+for(;!e.parentNode.className.match(t);)e=e.parentNode;
+return e.parentNode||"";
+}
+function i(e){
+this.container=e.container,this.biz=e.biz,this.mid=e.mid,this.idx=e.idx,this.vid=e.vid,
+this.isVideo=e.isVideo,this.dislikeCb=e.dislikeCb,s["top"===e.position?"addClass":"removeClass"](this.container.querySelector(".js_dialog_wrp"),"feedback_dialog_pos_top"),
+this.bindEvent();
+}
+function a(e){
+var a=e.container;
+n.on(a,"touchstart",".js_feedback_btn",function(e){
+e.stopPropagation();
+},!0),n.on(a,"touchend",".js_feedback_btn",function(e){
+e.stopPropagation();
+},!0),n.on(a,"click",".js_feedback_btn",function(a){
+a.stopPropagation();
+var o=a.delegatedTarget,s=t(o,"js_related_item"),n=268;
+l=new i({
+container:s,
+biz:e.biz,
+mid:e.mid,
+idx:e.idx,
+isVideo:e.isVideo,
+vid:e.vid,
+position:r.getInnerHeight()-s.getBoundingClientRect().bottom<n?"top":"bottom",
+dislikeCb:e.dislikeCb
+}),l.show();
+},!0);
+}
+var o=e("biz_wap/utils/ajax.js"),s=e("biz_common/dom/class.js"),n=e("biz_common/dom/event.js"),d=e("biz_common/utils/url/parse.js"),r=e("common/utils.js"),l=null;
+return i.prototype.bindEvent=function(){
+var e=this,i=this.container,a=this.biz,r=this.mid,l=this.idx,c=i.getAttribute("data-url"),u=new Set,_=new Set,m=i.querySelector(".js_submit");
+this.tabClickEventHandler=function(e){
+e.stopPropagation(),e.preventDefault();
+var t=e.delegatedTarget,i=t.getAttribute("data-value");
+s.hasClass(t,"js_reason")&&(i*=1),s.hasClass(t,"feedback_tag_selected")?(s.removeClass(t,"feedback_tag_selected"),
+s.hasClass(t,"js_reason")?u.delete(i):_.delete(i)):(s.addClass(t,"feedback_tag_selected"),
+s.hasClass(t,"js_reason")?u.add(i):_.add(i)),0===u.size&&0===_.size?s.addClass(m,"weui-btn_disabled"):s.removeClass(m,"weui-btn_disabled");
+},this.submitDataHandler=function(n){
+n.stopPropagation(),n.preventDefault();
+var m=n.target;
+if(!s.hasClass(m,"weui-btn_disabled")){
+var h={
+tacitly:Array.from(u),
+keyword:Array.from(_)
+},b={
+biz_from:a,
+mid_from:r,
+idx_from:l,
+recommended_biz:d.getQuery("__biz",c),
+mid:d.getQuery("mid",c),
+idx:d.getQuery("idx",c),
+reason:JSON.stringify(h)
+},p="/mp/relatedarticle?action=dislike";
+e.isVideo&&(b.vid_from=e.vid,b.vid=i.getAttribute("data-vid"),p="/mp/video_similar?action=dislike"),
+o({
+type:"POST",
+url:p,
+dataType:"json",
+data:b,
+success:function(i){
+if(console.log(i),i&&i.base_resp&&0===i.base_resp.ret){
+e.hide(m);
+var a=t(m,"js_related_item");
+e.dislikeCb(a);
+}else window.weui.alert("系统错误，请稍后重试");
+}
+});
+}
+},this.maskHandler=function(t){
+t.stopPropagation(),t.preventDefault(),e.hide(t.target);
+},this.maskTouchMoveHandler=function(e){
+e.stopPropagation(),e.preventDefault();
+},this.stopPropagationHandler=function(e){
+e.stopPropagation();
+},n.on(i,"click",".js_tag_item",this.tabClickEventHandler,!0),n.on(m,"click",this.submitDataHandler,!0),
+n.on(i,"click",".js_mask",this.maskHandler,!0),n.on(i,"touchmove",".js_mask",this.maskTouchMoveHandler,!0),
+n.on(i,"touchmove",".js_dialog_wrp",this.maskTouchMoveHandler,!0),n.on(i,"click",".js_dialog_wrp",this.maskTouchMoveHandler,!1),
+n.on(i,"touchstart",".js_feedback_dialog",this.stopPropagationHandler,!0),n.on(i,"touchend",".js_feedback_dialog",this.stopPropagationHandler,!0);
+},i.prototype.show=function(){
+this.container.querySelector(".js_feedback_dialog").style.display="",s.addClass(this.container.querySelector(".js_feedback_dialog"),"feedback_dialog_show");
+},i.prototype.hide=function(){
+var e=this.container,t=e.querySelector(".js_submit");
+n.off(e,"click",this.tabClickEventHandler,!0),n.off(t,"click",this.submitDataHandler,!0),
+n.off(e,"click",this.maskHandler,!0),n.off(e,"touchmove",this.maskTouchMoveHandler,!0),
+n.off(e,"click",this.maskTouchMoveHandler,!1),s.removeClass(this.container.querySelector(".js_feedback_dialog"),"feedback_dialog_show");
+},{
+init:a
+};
+});define("appmsg/related_article_item.html.js",[],function(){
+return'<# list.forEach(function(item, idx) { #>\n  <a href="javascript:void(0);" class="weui-media-box weui-media-box_appmsg js_related_item"\n    data-index="<#=begin+idx#>"\n    data-url="<#=item.url#>"\n    data-time="<#=item.send_time#>"\n    data-recalltype="<#=item.recall_type#>"\n    data-isreaded="<#=item.is_readed#>"\n    data-bizuin="<#=item.bizuin#>"\n    data-mid="<#=item.mid#>"\n    data-idx="<#=item.idx#>"\n    data-item_show_type="<#=item.item_show_type#>"\n    data-exptype="<#=item.exptype#>"\n    data-ext_info="<#=item.ext_info#>"\n  >\n    <div class="weui-media-box__bd">\n      <div class="ellipsis_relate_title weui_ellipsis_mod_wrp\n        <# if (item.is_pay_subscribe) { #>\n          <# if (item.is_paid) { #>\n          relate_article_pay\n          <# } else { #>\n          <# } #>\n        <# } else { #>\n          relate_article_default\n        <# } #>\n      ">\n        <div class="weui_ellipsis_mod">\n          <div class="weui_ellipsis_mod_inner">\n            <#=item.title#>\n            <# if (item.is_pay_subscribe) { #>\n              <# if (item.is_paid) { #>\n                <span class="pay__tag">已付费</span>\n              <# } else { #>\n                <span class="unpay__tag">付费</span>\n              <# } #>\n            <# } #>\n          </div>\n        </div>\n        <div class="weui_ellipsis_fake_mod">\n          <div class="weui_ellipsis_fake_inner">\n            <#=item.title#>\n            <# if (item.is_pay_subscribe) { #>\n              <# if (item.is_paid) { #>\n                <span class="pay__tag">已付费</span>\n              <# } else { #>\n                <span class="unpay__tag">付费</span>\n              <# } #>\n            <# } #>\n          </div>\n          <div class="weui_ellipsis_fake_placeholder"></div>\n          <div class="weui_ellipsis_fake_extra">...\n            <# if (item.is_pay_subscribe) { #>\n              <# if (item.is_paid) { #>\n                <span class="pay__tag">已付费</span>\n              <# } else { #>\n                <span class="unpay__tag">付费</span>\n              <# } #>\n            <# } #>\n          </div>\n        </div>\n      </div>\n      <div class="weui-media-box__info">\n        <div class="weui-media-box__info__inner">\n          <div class="weui-media-box__info__meta">\n            <# if (item.old_like_num >= 10) { #>\n              赞 <#=item.like_num_wording#>            <# } else if (item.is_pay_subscribe && item.pay_cnt) { #>\n              付费 <#=item.pay_cnt_wording#>            <# } else if (item.read_num) { #>\n              阅读 <#=item.read_num_wording#>            <# } #>\n          </div>\n          <div class="js_profile relate_profile relate_article_panel_active" data-username="<#=item.username#>">\n            <div class="weui-media-box__info__meta">\n              <span class="relate_profile_nickname">\n                <#=item.nickname#>\n              </span>\n            </div>\n          </div>\n        </div>\n        <div class="relate_article_opr">\n          <button type="button" class="reset_btn dislike_btn js_feedback_btn">不喜欢</button>\n        </div>\n        <!-- 去掉display:none;改用样式默认隐藏，加classnamme:feedback_dialog_show显示 -->\n        <div class="feedback_dialog_wrp js_feedback_dialog">\n          <div class="weui-mask js_mask"></div>\n          <!-- 底部时弹窗向上，加.feedback_dialog_pos_top -->\n          <div class="feedback_dialog js_dialog_wrp">\n            <div class="feedback_dialog_hd weui-flex">\n              <div class="weui-flex__item feedback_dialog_title">不看的原因</div>\n              <button type="button" class="weui-btn weui-btn_primary weui-btn_mini weui-btn_disabled js_submit">确定</button>\n            </div>\n            <div class="feedback_dialog_bd">\n              <ul class="feedback_tag_list">\n                <!-- 选中时tag加.feedback_tag_selected -->\n                <# reason.forEach(function(r) { #>\n                  <li class="feedback_tag_item js_reason js_tag_item" data-value="<#=r.value#>"><#=r.name#></li>\n                <# }); #>\n                <# item.keyword.forEach(function(k,i) { #>\n                  <# if (i<2) { #>\n                    <li class="feedback_tag_item js_keyword js_tag_item" data-value="<#=k#>">对<#=k#>不感兴趣</li>\n                  <# } #>\n                <# }); #>\n              </ul>\n            </div>\n          </div>\n        </div>\n      </div>\n    </div>\n    <div class="weui-media-box__ft" style="background-image:url(<#=item.cover#>)"></div>\n  </a>\n<# }); #>\n';
+});define("appmsg/related_article_tpl.html.js",[],function(){
+return'<div class="relate_mod_transition function_mod js_related_area" style="opacity: 1; overflow: hidden; height: 0; margin: 0;">\n  <div class="function_mod_index js_related_main">\n      <div class="function_hd js_related_title">\n        <# if (type === \'share\') { #> <!-- 分享 -->\n          分享此内容的人还喜欢        <# } else if (type === \'favorite\') { #> <!-- 收藏 -->\n          收藏此内容的人还喜欢        <# } else if (type === \'praise\' || type === \'like\') { #> <!-- 点赞/在看 -->\n          喜欢此内容的人还喜欢        <# } else { #> <!-- 其它 -->\n          喜欢此内容的人还喜欢        <# } #>\n      </div>\n      <div class="function_bd">\n          <div class="relate_article_list relate_article_placeholder js_related_placeholder">\n              <div class="weui-media-box weui-media-box_appmsg"><div class="weui-media-box_placeholder"></div></div>\n              <div class="weui-media-box weui-media-box_appmsg"><div class="weui-media-box_placeholder"></div></div>\n              <div class="weui-media-box weui-media-box_appmsg"><div class="weui-media-box_placeholder"></div></div>\n          </div>\n          <div class="relate_article_index_list relate_article_list js_related_list" style="height: auto;"></div>\n      </div>\n  </div>\n</div>\n';
+});define("appmsg/i18n.js",[],function(e,n){
+"use strict";
+n.dealLikeReadShow_en=function(e){
+if("undefined"==typeof LANG||!LANG)return 0===parseInt(e)?"":e;
+if("en"==LANG){
+var n="";
+if(parseInt(e)>1e5)n="100k+";else if(parseInt(e)>1e4&&parseInt(e)<=1e5){
+var r=""+parseInt(e)/1e3,t=r.indexOf(".");
+n=-1===t?r+"k":r.substr(0,t)+"."+r.charAt(t+1)+"k";
+}else n=0===parseInt(e)?"":e;
+return n;
+}
+return"";
+};
+});define("album/utils/report.js",["common/comm_report.js"],function(e){
+"use strict";
+var i=e("common/comm_report.js"),o=window.WX_BJ_REPORT||{},r=function(){
+var e=arguments.length<=0||void 0===arguments[0]?{}:arguments[0],r={
+BizUin:window.biz,
+MsgId:1*window.mid,
+ItemIdx:1*window.idx,
+ItemShowType:1*window.item_show_type||0,
+SessionId:window.sessionid+"",
+EnterId:1*window.enterid,
+Scene:1*window.source,
+SubScene:1*window.subscene,
+AlbumId:e.albumId+"",
+AlbumType:1*e.albumType,
+EventType:1*e.eventType,
+Vid:e.vid,
+Audioid:e.audioid||"",
+Title:e.title||"",
+TagSource:1*e.tagSrc||0
+};
+i.report(19647,r,{
+success:function(e){
+1*e.err_code!==0&&"undefined"!=typeof o&&o.BadJs&&o.BadJs.report("mmdata report failed","log_id: 19647",{
+mid:"mmbizwap:album_Monitor",
+_info:{
+postData:r,
+errCode:e.err_code,
+errMsg:e.err_msg
+}
+});
+}
+});
+},n=function(){
+var e=arguments.length<=0||void 0===arguments[0]?{}:arguments[0],r={
+BizUin:window.biz,
+Scene:1*window.source,
+SubScene:1*window.subscene,
+EnterId:1*window.enterid,
+SceneNote:e.sceneNote+"",
+AlbumId:e.albumId+"",
+AlbumType:1*e.albumType,
+EventType:1*e.eventType,
+IfSubscription:1*e.isSubscribed===1?2:1,
+NewTagId:e.tagId+"",
+ShowTag:e.showTag+"",
+InsideTag:e.insideTag+"",
+Cate1:e.c1+"",
+Cate2:e.c2+"",
+StayTime:e.stayTime?1*e.stayTime:0,
+NetworkType:1*e.networkType
+};
+i.report(19648,r,{
+async:e.async||!0,
+success:function(e){
+1*e.err_code!==0&&"undefined"!=typeof o&&o.BadJs&&o.BadJs.report("mmdata report failed","log_id: 19648",{
+mid:"mmbizwap:album_Monitor",
+_info:{
+postData:r,
+errCode:e.err_code,
+errMsg:e.err_msg
+}
+});
+}
+});
+},d=function(){
+var e=arguments.length<=0||void 0===arguments[0]?{}:arguments[0],r={
+BizUin:window.biz,
+MsgId:1*e.msgid,
+ItemIdx:1*e.itemidx,
+Pos:1*e.pos,
+Scene:178,
+SubScene:1*window.subscene,
+EnterId:1*window.enterid,
+SceneNote:e.sceneNote+"",
+AlbumId:e.albumId+"",
+AlbumType:1*e.albumType,
+EventType:1*e.eventType,
+Vid:e.vid,
+IfSubscription:1*e.isSubscribed===1?2:1,
+NewTagId:e.tagId+"",
+ShowTag:e.showTag+"",
+InsideTag:e.insideTag+"",
+Cate1:e.c1+"",
+Cate2:e.c2+"",
+ArticleSource:1
+};
+i.report(19649,r,{
+success:function(e){
+1*e.err_code!==0&&"undefined"!=typeof o&&o.BadJs&&o.BadJs.report("mmdata report failed","log_id: 19649",{
+mid:"mmbizwap:album_Monitor",
+_info:{
+postData:r,
+errCode:e.err_code,
+errMsg:e.err_msg
+}
+});
+}
+}),1*e.eventType===1&&!function(){
+var r={
+BizUin:window.biz,
+MsgId:1*e.msgid,
+ItemIdx:1*e.itemidx,
+AppMsgUrl:e.url,
+Title:e.title,
+IsReaded:1*e.isRead,
+Scene:1*window.source,
+SubScene:1*window.subscene
+};
+i.report(20805,r,{
+success:function(e){
+1*e.err_code!==0&&"undefined"!=typeof o&&o.BadJs&&o.BadJs.report("mmdata report failed","log_id: 20805",{
+mid:"mmbizwap:album_Monitor",
+_info:{
+postData:r,
+errCode:e.err_code,
+errMsg:e.err_msg
+}
+});
+}
+});
+}();
+},t=function(){
+var e=arguments.length<=0||void 0===arguments[0]?{}:arguments[0],r={
+bizuin:window.biz,
+url:e.url+"",
+ActionType:1*e.actionType,
+Scene:1*window.source,
+Network:window.__networkType+"",
+AlbumId:e.albumId+"",
+AlbumType:1*e.albumType,
+ExpType:window.exptype||"",
+ExpSessionIdStr:window.expsessionid||""
+};
+i.report(10380,r,{
+success:function(e){
+1*e.err_code!==0&&"undefined"!=typeof o&&o.BadJs&&o.BadJs.report("mmdata report failed","log_id: 10380",{
+mid:"mmbizwap:album_Monitor",
+_info:{
+postData:r,
+errCode:e.err_code,
+errMsg:e.err_msg
+}
+});
+}
+});
+},s=function(){
+var e=arguments.length<=0||void 0===arguments[0]?{}:arguments[0],r={
+BizUin:window.biz,
+Action:1*e.action,
+AppMsgLikeType:window.appmsg_like_type,
+Scene:1*window.source,
+SubScene:1*window.subscene,
+AlbumId:e.albumId+"",
+AlbumType:1*e.albumType,
+ExpType:window.exptype||"",
+ExpSessionIdStr:window.expsessionid||""
+};
+i.report(14299,r,{
+success:function(e){
+1*e.err_code!==0&&"undefined"!=typeof o&&o.BadJs&&o.BadJs.report("mmdata report failed","log_id: 14299",{
+mid:"mmbizwap:album_Monitor",
+_info:{
+postData:r,
+errCode:e.err_code,
+errMsg:e.err_msg
+}
+});
+}
+});
+};
+return{
+cardReport:r,
+albumActionReport:n,
+articleActionReport:d,
+shareReport:t,
+likeReport:s
+};
+});define("biz_common/utils/wxgspeedsdk.js",[],function(){
+"use strict";
+function e(e){
+if(!e.pid||!e.speeds)return-1;
+if(!e.speeds.length>0){
+var n=e.speeds;
+e.speeds=[],e.speeds.push(n);
+}
+e.user_define&&(p=e.user_define);
+for(var t=d(e),o=0;o<e.speeds.length;o++){
+var r=e.speeds[o];
+r.time=parseInt(r.time),r.sid>20&&r.time>=0&&i(t,r.sid,r.time);
+}
+}
+function n(){
+s(function(){
+setTimeout(function(){
+for(var e in u)r({
+pid_uin_rid:e,
+speeds:u[e],
+user_define:p
+},c);
+u={};
+},100);
+});
+}
+function t(e){
+s(function(){
+if(!e.pid||!e.time)return-1;
+var n=d(e);
+i(n,9,e.time);
+});
+}
+function o(e){
+s(function(){
+var n=d(e);
+u[n]||(u[n]=[]);
+var t=window.performance||window.msPerformance||window.webkitPerformance||{};
+if(t&&t.timing){
+var o=t.timing||{};
+i(n,1,o.domainLookupEnd-o.domainLookupStart),i(n,2,"https:"==location.protocol&&0!=o.secureConnectionStart?o.connectEnd-o.secureConnectionStart:0),
+i(n,3,o.connectEnd-o.connectStart),i(n,4,o.responseStart-o.requestStart),i(n,5,o.responseEnd-o.responseStart),
+i(n,6,o.domContentLoadedEventStart-o.domLoading),i(n,7,0==o.domComplete?0:o.domComplete-o.domLoading),
+i(n,8,0==o.loadEventEnd?0:o.loadEventEnd-o.loadEventStart),function(){
+setTimeout(function(){
+o.loadEventEnd&&(i(n,7,0==o.domComplete?0:o.domComplete-o.domLoading),i(n,8,0==o.loadEventEnd?0:o.loadEventEnd-o.loadEventStart));
+},0);
+}(u),u[n][9]||i(n,9,o.domContentLoadedEventStart-o.navigationStart),i(n,10,o.redirectEnd-o.redirectStart),
+i(n,11,o.domainLookupStart-o.fetchStart),i(n,12,o.domLoading-o.responseStart);
+}
+});
+}
+function i(e,n,t){
+u[e]=u[e]||[],u[e][n]=u[e][n]||[],0>t||(21>n?u[e][n][0]=t:u[e][n].push(t));
+}
+function d(e){
+return e&&e.pid?e.pid+"_"+(e.uin||0)+"_"+(e.rid||0):void(console&&console.error("Must provide a pid"));
+}
+function r(e,n){
+var t=e.pid_uin_rid.split("_");
+if(3!=t.length)return void(console&&console.error("pid,uin,rid, invalid args"));
+var o="pid="+t[0]+"&uin="+t[1]+"&rid="+t[2];
+e.user_define&&(o+="&user_define="+e.user_define);
+for(var i=n+o+"&speeds=",d="",r=[],s=1;s<e.speeds.length;s++)if(e.speeds[s]){
+for(var a=0;a<e.speeds[s].length;a++){
+var p=s+"_"+e.speeds[s][a];
+i.length+d.length+p.length<1024?d=d+p+";":(d.length&&r.push(i+d.substring(0,d.length-1)),
+d=p+";");
+}
+s==e.speeds.length-1&&r.push(i+d.substring(0,d.length-1));
+}
+for(var s=0;s<r.length;s++)(new Image).src=r[s];
+}
+function s(e){
+"complete"==document.readyState?e():f.push(e);
+}
+function a(){
+for(var e=0;e<f.length;e++)f[e]();
+f=[];
+}
+var p,u={},c="https://badjs.weixinbridge.com/frontend/reportspeed?",f=[];
+return window.addEventListener?window.addEventListener("load",a,!1):window.attachEvent&&window.attachEvent("onload",a),
+{
+saveSpeeds:e,
+send:n,
+setFirstViewTime:t,
+setBasicTime:o
+};
+});
